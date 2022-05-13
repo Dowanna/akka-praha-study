@@ -1,5 +1,3 @@
 package domain
 
-class Tag(val name: String) {
-
-}
+case class Tag(val name: String) {}
