@@ -1,4 +1,4 @@
-package src.main.scala.typed // praha-incとprahaincの違いはどう吸収すれば良いのだろう
+package typed // praha-incとprahaincの違いはどう吸収すれば良いのだろう
 
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.scaladsl.ActorContext
