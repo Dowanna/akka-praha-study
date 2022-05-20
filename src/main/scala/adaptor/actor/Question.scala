@@ -11,14 +11,13 @@ object QuestionActor {
   def apply(): Behavior[Command] = {
     create(Vector.empty);
   }
-  
-  private def create(answerActors: Vector[ActorRef[]]) :Behavior[Command] = {
-    Behaviors.receive{ (ctx, msg) => 
+
+  private def create(answerActors: Vector[ActorRef[AnswerActor.Command]]): Behavior[Command] = {
+    Behaviors.receive { (ctx, msg) =>
       msg match {
-        case AddAnswer =>
-          Behaviors.empty
-          // answerActorをspawn
-          // spawnしたactorRef+元々のやつを足して、引数として再度createを呼ぶ
+        case AddAnswer(answer) =>
+          val newAnswerActor = ctx.spawn(AnswerActor(answer), s"answer-${answer.id}")
+          create(answerActors :+ newAnswerActor)
       }
     }
   }
