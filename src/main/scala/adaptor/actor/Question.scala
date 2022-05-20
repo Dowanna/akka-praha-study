@@ -1,8 +1,13 @@
 package adaptor.actor
 
+import adaptor.actor.AnswerActor.GetAnswerResponse
+import akka.actor.Status.Success
 import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.Behaviors
+import akka.util.Timeout
 import domain.Answer
+
+import scala.concurrent.duration.DurationInt
 
 object QuestionActor {
   sealed trait Command
@@ -20,7 +25,12 @@ object QuestionActor {
           val newAnswerActor = ctx.spawn(AnswerActor(answer), s"answer-${answer.id}")
           create(answerActors :+ newAnswerActor)
         case GetAllAnswers() =>
-          answerActors.map(answerActor => answerActor ! AnswerActor.GetAnswer())
+          implicit val timeout: Timeout = 3.seconds
+          answerActors.map(answerActor => ctx.ask(answerActor, AnswerActor.GetAnswer.apply)({
+//            case Success(value) => "hoge"
+//            case Failure(exception) => "hoge"
+          }))
+          Behaviors.same
       }
     }
   }
