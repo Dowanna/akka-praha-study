@@ -7,6 +7,7 @@ import domain.Answer
 object QuestionActor {
   sealed trait Command
   case class AddAnswer(answer: Answer) extends Command
+  case class GetAllAnswers() extends Command
 
   def apply(): Behavior[Command] = {
     create(Vector.empty);
@@ -18,6 +19,8 @@ object QuestionActor {
         case AddAnswer(answer) =>
           val newAnswerActor = ctx.spawn(AnswerActor(answer), s"answer-${answer.id}")
           create(answerActors :+ newAnswerActor)
+        case GetAllAnswers() =>
+          answerActors.map(answerActor => answerActor ! AnswerActor.GetAnswer())
       }
     }
   }
