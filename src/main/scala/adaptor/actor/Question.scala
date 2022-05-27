@@ -14,6 +14,7 @@ object QuestionActor {
   case class AddAnswer(answer: Answer) extends Command
   case class GetAllAnswers(replyTo: ActorRef[GetAllAnswersResponse]) extends Command
   case class GetAllAnswersResponse(answers: Vector[Answer]) extends Command
+  case class FinishedGetAllAnswers() extends Command
 
   private case class AdaptedResponse(getAnswerResponse: GetAnswerResponse) extends Command
 
@@ -21,7 +22,10 @@ object QuestionActor {
     create(Vector.empty);
   }
 
-  private def create(answerActors: Vector[ActorRef[AnswerActor.Command]], answers: Vector[Answer]): Behavior[Command] = {
+  private def create(answerActors: Vector[ActorRef[AnswerActor.Command]],
+                     answers: Vector[Answer],
+                     replyTo: ActorRef[GetAllAnswersResponse],
+                     pendingGetAnswerMessages: Vector[String]): Behavior[Command] = {
     Behaviors.receive { (ctx, msg) =>
       msg match {
         case AddAnswer(answer) =>
@@ -29,6 +33,8 @@ object QuestionActor {
           create(answerActors :+ newAnswerActor)
         case GetAllAnswers(replyTo) =>
           implicit val timeout: Timeout = 3.seconds
+          val pendingAnswers = answers.map(answer => answer.id)
+
           answerActors.map(answerActor =>
             ctx.ask(answerActor, AnswerActor.GetAnswer.apply) {
               case Success(v1) =>
@@ -37,14 +43,19 @@ object QuestionActor {
                 AdaptedResponse(null)
             }
           )
-          Behaviors.same
+          create(answerActors, answers, replyTo, pendingAnswers)
         case AdaptedResponse(getAnswerResponse) => {
           getAnswerResponse match {
             case null =>
               Behaviors.same
             case answer =>
+              val p
               create(answerActors, answers :+ answer.answer)
           }
+        }
+        case FinishedGetAllAnswers() => {
+          replyTo ! GetAllAnswersResponse(answers)
+          Behaviors.same
         }
       }
     }
