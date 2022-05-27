@@ -23,20 +23,21 @@ object QuestionActor {
   case class GetAllAnswersResponse(answers: Vector[Answer])
 
   def apply(): Behavior[Command] = {
-    create(Vector.empty, Vector.empty, None, Vector.empty);
+    create(Vector.empty, Vector.empty, None, Vector.empty, Vector.empty);
   }
 
   private def create(
       answerActors: Vector[ActorRef[AnswerActor.Command]],
       answers: Vector[Answer],
       replyTo: Option[ActorRef[GetAllAnswersResponse]],
-      pendingGetAnswerMessages: Vector[String]
+      pendingGetAnswerMessages: Vector[String],
+      getAllAnswersQueue: Vector[Answer]
   ): Behavior[Command] = {
     Behaviors.receive { (ctx, msg) =>
       msg match {
         case AddAnswer(answer) =>
           val newAnswerActor = ctx.spawn(AnswerActor(answer), s"answer-${answer.id}")
-          create(answerActors :+ newAnswerActor, answers :+ answer, replyTo, pendingGetAnswerMessages)
+          create(answerActors :+ newAnswerActor, answers :+ answer, replyTo, pendingGetAnswerMessages, getAllAnswersQueue)
         case GetAllAnswers(replyTo) =>
           implicit val timeout: Timeout = 3.seconds
           val pendingAnswers = answers.map(answer => answer.id)
@@ -49,7 +50,7 @@ object QuestionActor {
                 AdaptedResponse(null)
             }
           )
-          create(answerActors, answers, Some(replyTo), pendingAnswers)
+          create(answerActors, answers, Some(replyTo), pendingAnswers, getAllAnswersQueue)
         case AdaptedResponse(getAnswerResponse) => {
           getAnswerResponse match {
             case null =>
@@ -61,16 +62,16 @@ object QuestionActor {
                   ctx.self ! FinishedGetAllAnswers()
                 case false =>
               }
-              create(answerActors, answers :+ answer.answer, replyTo, stillPending)
+              create(answerActors, answers, replyTo, stillPending, getAllAnswersQueue :+ answer.answer)
           }
         }
         case FinishedGetAllAnswers() => {
           replyTo match {
             case Some(replyTo) =>
-              replyTo ! GetAllAnswersResponse(answers)
+              replyTo ! GetAllAnswersResponse(getAllAnswersQueue)
             case None =>
           }
-          Behaviors.same
+          create(answerActors, answers, replyTo, pendingGetAnswerMessages, Vector.empty)
         }
       }
     }

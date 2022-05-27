@@ -16,12 +16,12 @@ class QuestionActorSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike {
       val answer = new Answer(
         id = "001",
         text = "ggrks",
-        tags = Set(new Tag(name = "Google"), new Tag("Yahoo") )
+        tags = Set(new Tag(name = "Google"), new Tag("Yahoo"))
       )
       questionActor ! AddAnswer(answer)
       questionActor ! GetAllAnswers(testProbe.ref)
 
-      testProbe.expectMessage(GetAllAnswersResponse(Vector(answer, answer)))
+      testProbe.expectMessage(GetAllAnswersResponse(Vector(answer)))
     }
   }
 }
