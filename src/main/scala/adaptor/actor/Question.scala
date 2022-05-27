@@ -10,27 +10,33 @@ import scala.concurrent.duration.DurationInt
 import scala.util.{Failure, Success, Try}
 
 object QuestionActor {
+  // このactorが受信するmessage
   sealed trait Command
   case class AddAnswer(answer: Answer) extends Command
   case class GetAllAnswers(replyTo: ActorRef[GetAllAnswersResponse]) extends Command
-  case class GetAllAnswersResponse(answers: Vector[Answer]) extends Command
   case class FinishedGetAllAnswers() extends Command
 
+  // このactorが受信した際に変換するmessage
   private case class AdaptedResponse(getAnswerResponse: GetAnswerResponse) extends Command
 
+  // このactorが送信するmessage
+  case class GetAllAnswersResponse(answers: Vector[Answer])
+
   def apply(): Behavior[Command] = {
-    create(Vector.empty);
+    create(Vector.empty, Vector.empty, None, Vector.empty);
   }
 
-  private def create(answerActors: Vector[ActorRef[AnswerActor.Command]],
-                     answers: Vector[Answer],
-                     replyTo: ActorRef[GetAllAnswersResponse],
-                     pendingGetAnswerMessages: Vector[String]): Behavior[Command] = {
+  private def create(
+      answerActors: Vector[ActorRef[AnswerActor.Command]],
+      answers: Vector[Answer],
+      replyTo: Option[ActorRef[GetAllAnswersResponse]],
+      pendingGetAnswerMessages: Vector[String]
+  ): Behavior[Command] = {
     Behaviors.receive { (ctx, msg) =>
       msg match {
         case AddAnswer(answer) =>
           val newAnswerActor = ctx.spawn(AnswerActor(answer), s"answer-${answer.id}")
-          create(answerActors :+ newAnswerActor)
+          create(answerActors :+ newAnswerActor, answers :+ answer, replyTo, pendingGetAnswerMessages)
         case GetAllAnswers(replyTo) =>
           implicit val timeout: Timeout = 3.seconds
           val pendingAnswers = answers.map(answer => answer.id)
@@ -43,18 +49,27 @@ object QuestionActor {
                 AdaptedResponse(null)
             }
           )
-          create(answerActors, answers, replyTo, pendingAnswers)
+          create(answerActors, answers, Some(replyTo), pendingAnswers)
         case AdaptedResponse(getAnswerResponse) => {
           getAnswerResponse match {
             case null =>
               Behaviors.same
             case answer =>
-              val p
-              create(answerActors, answers :+ answer.answer)
+              val stillPending = pendingGetAnswerMessages.filter(id => id != answer.answer.id)
+              stillPending.length == 0 match {
+                case true =>
+                  ctx.self ! FinishedGetAllAnswers()
+                case false =>
+              }
+              create(answerActors, answers :+ answer.answer, replyTo, stillPending)
           }
         }
         case FinishedGetAllAnswers() => {
-          replyTo ! GetAllAnswersResponse(answers)
+          replyTo match {
+            case Some(replyTo) =>
+              replyTo ! GetAllAnswersResponse(answers)
+            case None =>
+          }
           Behaviors.same
         }
       }
