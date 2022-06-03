@@ -38,7 +38,13 @@ object QuestionActor {
       msg match {
         case AddAnswer(answer) =>
           val newAnswerActor = ctx.spawn(AnswerActor(answer), s"answer-${answer.id}")
-          create(answerActors :+ newAnswerActor, question.addAnswer(answer), replyTo, pendingGetAnswerMessages, getAllAnswersQueue)
+          question.addAnswer(answer) match {
+            case Left(_) =>
+              // todo: もし追加に失敗した時の処理を書く
+              Behaviors.same
+            case Right(e) =>
+              create(answerActors :+ newAnswerActor, question, replyTo, pendingGetAnswerMessages, getAllAnswersQueue)
+          }
         case GetAllAnswers(replyTo) =>
           implicit val timeout: Timeout = 3.seconds
           val pendingAnswers = question.answers.map(answer => answer.id)

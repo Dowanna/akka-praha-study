@@ -10,7 +10,7 @@ class Question(val id: String, val title: String, val body: String, val answers:
   // 6: Reader
   // 7: Writer
   // 8: State
-  def addAnswer(answer: Answer) = new Question(id, title, body, answers + answer, tags)
+  def addAnswer(answer: Answer): Either[Null, Question] = Right(new Question(id, title, body, answers + answer, tags))
   def addTag(tag: Tag) = new Question(id, title, body, answers, tags + tag)
   def removeTag(tag: Tag) = new Question(id, title, body, answers, tags - tag)
 }
