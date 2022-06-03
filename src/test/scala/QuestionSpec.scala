@@ -11,18 +11,23 @@ class QuestionActorSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike {
   "Question Actor" must {
     "アンサーの追加と取得ができる" in {
       val testProbe = createTestProbe[GetAllAnswersResponse]()
-      val testQuestion = new Question("id", "title", "body", Set.empty, Set(Tag("test")))
-      val questionActor = spawn(QuestionActor(testQuestion))
+      val testQuestion = Question("id", "title", "body", Set.empty, Set(Tag("test")))
 
-      val answer = new Answer(
-        id = "001",
-        text = "ggrks",
-        tags = Set(new Tag(name = "Google"), new Tag("Yahoo"))
-      )
-      questionActor ! AddAnswer(answer)
-      questionActor ! GetAllAnswers(testProbe.ref)
+      testQuestion match {
+        case Left(_) =>
+        case Right(question) =>
+          val questionActor = spawn(QuestionActor(question))
 
-      testProbe.expectMessage(GetAllAnswersResponse(Vector(answer)))
+          val answer = new Answer(
+            id = "001",
+            text = "ggrks",
+            tags = Set(new Tag(name = "Google"), new Tag("Yahoo"))
+          )
+          questionActor ! AddAnswer(answer)
+          questionActor ! GetAllAnswers(testProbe.ref)
+
+          testProbe.expectMessage(GetAllAnswersResponse(Vector(answer)))
+      }
     }
   }
 }

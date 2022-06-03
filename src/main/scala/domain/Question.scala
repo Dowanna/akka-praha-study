@@ -1,6 +1,6 @@
 package domain
 
-class Question(val id: String, val title: String, val body: String, val answers: Set[Answer], val tags: Set[Tag]) {
+class Question private(val id: String, val title: String, val body: String, val answers: Set[Answer], val tags: Set[Tag]) {
   // バリデーションのパターン
   // 1: Try
   // 2: Either
@@ -10,7 +10,16 @@ class Question(val id: String, val title: String, val body: String, val answers:
   // 6: Reader
   // 7: Writer
   // 8: State
-  def addAnswer(answer: Answer): Either[Null, Question] = Right(new Question(id, title, body, answers + answer, tags))
+  def addAnswer(answer: Answer): Either[Null, Question] = Question(id, title, body, answers + answer, tags)
   def addTag(tag: Tag) = new Question(id, title, body, answers, tags + tag)
   def removeTag(tag: Tag) = new Question(id, title, body, answers, tags - tag)
+}
+
+object Question {
+  def apply(id: String, title: String, body: String, answers: Set[Answer], tags: Set[Tag]): Either[Null, Question] = {
+
+    if (answers.size > 1) return Left(null)
+
+    Right(new Question(id, title, body, answers, tags))
+  }
 }

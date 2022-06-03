@@ -42,7 +42,7 @@ object QuestionActor {
             case Left(_) =>
               // todo: もし追加に失敗した時の処理を書く
               Behaviors.same
-            case Right(e) =>
+            case Right(question) =>
               create(answerActors :+ newAnswerActor, question, replyTo, pendingGetAnswerMessages, getAllAnswersQueue)
           }
         case GetAllAnswers(replyTo) =>
