@@ -1,6 +1,6 @@
 import adaptor.actor.QuestionActor
 import akka.actor.testkit.typed.scaladsl.ScalaTestWithActorTestKit
-import domain.{Answer, Tag}
+import domain.{Answer, Tag, Question}
 
 import scala.concurrent.duration.FiniteDuration
 import org.scalatest.wordspec.AnyWordSpecLike
@@ -11,7 +11,8 @@ class QuestionActorSpec extends ScalaTestWithActorTestKit with AnyWordSpecLike {
   "Question Actor" must {
     "アンサーの追加と取得ができる" in {
       val testProbe = createTestProbe[GetAllAnswersResponse]()
-      val questionActor = spawn(QuestionActor())
+      val testQuestion = new Question("id", "title", "body", Set.empty, Set(Tag("test")))
+      val questionActor = spawn(QuestionActor(testQuestion))
 
       val answer = new Answer(
         id = "001",

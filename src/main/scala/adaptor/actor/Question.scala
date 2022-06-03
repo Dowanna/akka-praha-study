@@ -24,7 +24,7 @@ object QuestionActor {
   case class GetAllAnswersResponse(answers: Vector[Answer])
 
   def apply(question: Question): Behavior[Command] = {
-    create(Vector.empty, Ques, None, Vector.empty, Vector.empty);
+    create(Vector.empty, question, None, Set.empty, Vector.empty);
   }
 
   private def create(
