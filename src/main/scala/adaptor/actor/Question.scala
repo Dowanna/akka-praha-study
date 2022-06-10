@@ -4,7 +4,7 @@ import adaptor.actor.AnswerActor.GetAnswerResponse
 import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.Behaviors
 import akka.util.Timeout
-import domain.{Answer, Question}
+import domain.{AddAnswerError, Answer, Question}
 
 import scala.:+
 import scala.concurrent.duration.DurationInt
@@ -13,7 +13,7 @@ import scala.util.{Failure, Success, Try}
 object QuestionActor {
   // このactorが受信するmessage
   sealed trait Command
-  case class AddAnswer(answer: Answer) extends Command
+  case class AddAnswer(answer: Answer, errorReplyTo: ActorRef[AddAnswerError]) extends Command
   case class GetAllAnswers(replyTo: ActorRef[GetAllAnswersResponse]) extends Command
   case class FinishedGetAllAnswers() extends Command
 
@@ -36,11 +36,11 @@ object QuestionActor {
   ): Behavior[Command] = {
     Behaviors.receive { (ctx, msg) =>
       msg match {
-        case AddAnswer(answer) =>
+        case AddAnswer(answer, errorReplyTo) =>
           val newAnswerActor = ctx.spawn(AnswerActor(answer), s"answer-${answer.id}")
           question.addAnswer(answer) match {
-            case Left(_) =>
-              // todo: もし追加に失敗した時の処理を書く
+            case Left(error) =>
+              errorReplyTo ! error
               Behaviors.same
             case Right(question) =>
               create(answerActors :+ newAnswerActor, question, replyTo, pendingGetAnswerMessages, getAllAnswersQueue)

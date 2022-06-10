@@ -1,5 +1,7 @@
 package domain
 
+case class AddAnswerError(tooManyAnswers: Boolean)
+
 class Question private(val id: String, val title: String, val body: String, val answers: Set[Answer], val tags: Set[Tag]) {
   // バリデーションのパターン
   // 1: Try
@@ -10,15 +12,15 @@ class Question private(val id: String, val title: String, val body: String, val 
   // 6: Reader
   // 7: Writer
   // 8: State
-  def addAnswer(answer: Answer): Either[Null, Question] = Question(id, title, body, answers + answer, tags)
+  def addAnswer(answer: Answer): Either[AddAnswerError, Question] = Question(id, title, body, answers + answer, tags)
   def addTag(tag: Tag) = new Question(id, title, body, answers, tags + tag)
   def removeTag(tag: Tag) = new Question(id, title, body, answers, tags - tag)
 }
 
 object Question {
-  def apply(id: String, title: String, body: String, answers: Set[Answer], tags: Set[Tag]): Either[Null, Question] = {
+  def apply(id: String, title: String, body: String, answers: Set[Answer], tags: Set[Tag]): Either[AddAnswerError, Question] = {
 
-    if (answers.size > 1) return Left(null)
+    if (answers.size > 1) return Left(AddAnswerError(tooManyAnswers = true))
 
     Right(new Question(id, title, body, answers, tags))
   }
