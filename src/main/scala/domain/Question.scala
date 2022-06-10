@@ -19,7 +19,6 @@ class Question private (val id: String, val title: String, val body: String, val
 
 object Question {
   def apply(id: String, title: String, body: String, answers: Set[Answer], tags: Set[Tag]): Either[AddAnswerError, Question] = {
-
     if (answers.size >= 2) return Left(AddAnswerError(tooManyAnswers = true))
 
     Right(new Question(id, title, body, answers, tags))
