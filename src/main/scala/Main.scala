@@ -5,21 +5,57 @@ import akka.actor.typed.scaladsl.ActorContext
 import akka.actor.typed.ActorSystem
 import akka.actor.typed.Behavior
 
-object Supervisor {
-  sealed trait Command
-  final case object RandomCommand extends Command
-  def apply(): Behavior[Command] = Behaviors.setup[Command](context => {
-    // context.log.info("behavior.setup complete!")
-    Behaviors.receiveMessage[Command] { _ =>
-      //   context.log.info("received message!")
-      Behaviors.same
-    }
-  })
-}
+//object Supervisor {
+//  sealed trait Command
+//  final case object RandomCommand extends Command
+//  def apply(): Behavior[Command] = Behaviors.setup[Command](context => {
+//    // context.log.info("behavior.setup complete!")
+//    Behaviors.receiveMessage[Command] { _ =>
+//      //   context.log.info("received message!")
+//      Behaviors.same
+//    }
+//  })
+//}
+//
+//object PrahaStudy {
+//  def main(args: Array[String]): Unit = {
+//    val system = ActorSystem[Supervisor.Command](Supervisor(), "akka-praha-study")
+//    system ! Supervisor.RandomCommand
+//  }
+//}
 
-object PrahaStudy {
-  def main(args: Array[String]): Unit = {
-    val system = ActorSystem[Supervisor.Command](Supervisor(), "akka-praha-study")
-    system ! Supervisor.RandomCommand
+//
+////#start-http-server
+private def startHttpServer(routes: Route)(implicit system: ActorSystem[_]): Unit = {
+  // Akka HTTP still needs a classic ActorSystem to start
+  import system.executionContext
+
+  val futureBinding = Http().newServerAt("localhost", 8080).bind(routes)
+  futureBinding.onComplete {
+  case Success(binding) =>
+  val address = binding.localAddress
+  system.log.info("Server online at http://{}:{}/", address.getHostString, address.getPort)
+  case Failure(ex) =>
+  system.log.error("Failed to bind HTTP endpoint, terminating system", ex)
+  system.terminate()
   }
-}
+  }
+
+//  //#start-http-server
+//  def main(args: Array[String]): Unit = {
+//  //#server-bootstrapping
+//  val rootBehavior = Behaviors.setup[Nothing] { context =>
+//  //      val userRegistryActor = context.spawn(UserRegistry(), "UserRegistryActor")
+//  //      context.watch(userRegistryActor)
+//
+//  val eventRegistryActor = context.spawn(EventRegistry(), "EventRegistryActor")
+//  context.watch(eventRegistryActor)
+//
+//  val routes = new EventRoutes(eventRegistryActor)(context.system)
+//  startHttpServer(routes.eventRoutes)(context.system)
+//
+//  Behaviors.empty
+//  }
+//  val system = ActorSystem[Nothing](rootBehavior, "HelloAkkaHttpServer")
+//  //#server-bootstrapping
+//  }
