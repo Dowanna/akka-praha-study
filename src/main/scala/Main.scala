@@ -6,6 +6,7 @@ import akka.actor.typed.ActorSystem
 import akka.actor.typed.Behavior
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Route
+import controller.{QuestionController}
 import scala.util.Success
 import scala.util.Failure
 
@@ -30,14 +31,11 @@ object PrahaStudy {
   def main(args: Array[String]): Unit = {
     // #server-bootstrapping
     val rootBehavior = Behaviors.setup[Nothing] { context =>
-      //      val userRegistryActor = context.spawn(UserRegistry(), "UserRegistryActor")
-      //      context.watch(userRegistryActor)
+      val eventRegistryActor = context.spawn(QuestionController(), "QuestionController")
+      context.watch(eventRegistryActor)
 
-      // val eventRegistryActor = context.spawn(EventRegistry(), "EventRegistryActor")
-      // context.watch(eventRegistryActor)
-
-      // val routes = new EventRoutes(eventRegistryActor)(context.system)
-      // startHttpServer(routes.eventRoutes)(context.system)
+      val routes = new EventRoutes(eventRegistryActor)(context.system)
+      startHttpServer(routes.eventRoutes)(context.system)
 
       Behaviors.empty
     }
@@ -59,11 +57,3 @@ object Supervisor {
     }
   })
 }
-//
-//object PrahaStudy {
-//  def main(args: Array[String]): Unit = {
-//    val system = ActorSystem[Supervisor.Command](Supervisor(), "akka-praha-study")
-//    system ! Supervisor.RandomCommand
-//  }
-//}
-//
