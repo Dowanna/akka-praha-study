@@ -7,6 +7,7 @@ import akka.actor.typed.Behavior
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Route
 import usecase.QuestionUsecase
+import route.QuestionRoutes
 import scala.util.Success
 import scala.util.Failure
 
@@ -34,14 +35,12 @@ object PrahaStudy {
       val questionUsecase = context.spawn(QuestionUsecase(), "QuestionUsecase")
       context.watch(questionUsecase)
 
-      val routes = new EventRoutes(questionUsecase)(context.system)
-      startHttpServer(routes.eventRoutes)(context.system)
+      val routes = new QuestionRoutes() // (context.system)
+      startHttpServer(routes.questionRoutes)(context.system)
 
       Behaviors.empty
     }
-    val system = ActorSystem[Supervisor.Command](Supervisor(), "akka-praha-study")
-    system ! Supervisor.RandomCommand
-
+    val system = ActorSystem[Nothing](rootBehavior, "akka-praha-study")
     // #server-bootstrapping
   }
 }
