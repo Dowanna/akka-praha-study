@@ -1,9 +1,9 @@
-package controller
+package usecase
 
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.Behavior
 
-object QuestionController {
+object QuestionUsecase {
   sealed trait Command
   final case class Hoge() extends Command
 
