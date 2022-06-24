@@ -5,9 +5,16 @@ import akka.http.scaladsl.server.Route
 import usecase.QuestionUsecase
 import domain.Question
 
-class QuestionRoutes(uscease: QuestionUsecase) { // QuestionUsecaseを引数に定義するためにはobject QuestionUsecaseだけではNG。class QuestionUsecaseを定義する必要があるが、理由はイマイチわかってない
-  // import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
-  import JsonFormats._
+class QuestionRoutes(uscease: QuestionUsecase) {
+  import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
+  import spray.json.DefaultJsonProtocol._
+
+  case class AnswerRequest(val id: String, val text: String, val tags: Set[TagRequest])
+  case class QuestionRequest(val id: String, val title: String, val body: String, val answers: Set[AnswerRequest], val tags: Set[TagRequest])
+  case class TagRequest(val name: String) // tagとanswerが循環参照しているような時は、どうやってjsonFormat作るんだろう？（片方を先に生成しないともう片方が生成できないデッドロック気味な状態）
+  implicit val tagJsonFormat = jsonFormat1(TagRequest)
+  implicit val answerJsonFormat = jsonFormat3(AnswerRequest)
+  implicit val questionJsonFormat = jsonFormat5(QuestionRequest)
 
   def getUsers(): String = {
     "hoge"
@@ -19,7 +26,7 @@ class QuestionRoutes(uscease: QuestionUsecase) { // QuestionUsecaseを引数に�
           complete(getUsers())
         },
         post {
-          entity(as[Question]) { user =>
+          entity(as[QuestionRequest]) { questionRequest =>
             onSuccess(createUser(user)) { performed =>
               complete((StatusCodes.Created, performed))
             }
