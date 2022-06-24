@@ -8,8 +8,10 @@ import domain.Question
 import usecase.QuestionUsecase.Hoge
 
 import scala.concurrent.Future
+import akka.actor.typed.ActorRef
+import domain.Tag
 
-class QuestionRoutes(usecase: QuestionUsecase) {
+class QuestionRoutes(usecase: ActorRef[QuestionUsecase.Command]) {
   import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
   import spray.json.DefaultJsonProtocol._
   import scala.concurrent.ExecutionContext.Implicits.global
@@ -25,9 +27,12 @@ class QuestionRoutes(usecase: QuestionUsecase) {
     "hoge"
   }
 
-  def createQuestion(questionRequest: QuestionRequest): Future[String] = {
+  def createQuestion(questionRequest: QuestionRequest): Future[Option[Question]] = {
     Future {
       usecase ! Hoge()
+
+      // 一旦仮のデータを返す
+      Question("id", "title", "body", Set.empty, Set(Tag("test")))
     }
   }
 
@@ -39,8 +44,8 @@ class QuestionRoutes(usecase: QuestionUsecase) {
         },
         post {
           entity(as[QuestionRequest]) { questionRequest =>
-            onSuccess(createQuestion(questionRequest)) { performed =>
-              complete((StatusCodes.Created, performed))
+            onSuccess(createQuestion(questionRequest)) { maybeQuestion =>
+              complete(maybeQuestion)
             }
           }
         }
