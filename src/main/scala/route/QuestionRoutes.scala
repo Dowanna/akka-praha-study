@@ -1,13 +1,18 @@
 package route
 
+import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import usecase.QuestionUsecase
 import domain.Question
+import usecase.QuestionUsecase.Hoge
 
-class QuestionRoutes(uscease: QuestionUsecase) {
+import scala.concurrent.Future
+
+class QuestionRoutes(usecase: QuestionUsecase) {
   import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
   import spray.json.DefaultJsonProtocol._
+  import scala.concurrent.ExecutionContext.Implicits.global
 
   case class AnswerRequest(val id: String, val text: String, val tags: Set[TagRequest])
   case class QuestionRequest(val id: String, val title: String, val body: String, val answers: Set[AnswerRequest], val tags: Set[TagRequest])
@@ -19,6 +24,13 @@ class QuestionRoutes(uscease: QuestionUsecase) {
   def getUsers(): String = {
     "hoge"
   }
+
+  def createQuestion(questionRequest: QuestionRequest): Future[String] = {
+    Future {
+      usecase ! Hoge()
+    }
+  }
+
   val questionRoutes: Route =
     pathPrefix("questions") {
       concat(
@@ -27,7 +39,7 @@ class QuestionRoutes(uscease: QuestionUsecase) {
         },
         post {
           entity(as[QuestionRequest]) { questionRequest =>
-            onSuccess(createUser(user)) { performed =>
+            onSuccess(createQuestion(questionRequest)) { performed =>
               complete((StatusCodes.Created, performed))
             }
           }
