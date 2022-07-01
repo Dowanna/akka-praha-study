@@ -35,7 +35,7 @@ object PrahaStudy {
       val questionUsecase = context.spawn(QuestionUsecase(), "QuestionUsecase")
       context.watch(questionUsecase)
 
-      val routes = new QuestionRoutes() // (context.system)
+      val routes = new QuestionRoutes(usecase = questionUsecase) // (context.system)
       startHttpServer(routes.questionRoutes)(context.system)
 
       Behaviors.empty

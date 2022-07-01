@@ -18,10 +18,10 @@ class QuestionRoutes(usecase: ActorRef[QuestionUsecase.Command]) {
 
   case class TagRequest(val name: String) // tagとanswerが循環参照しているような時は、どうやってjsonFormat作るんだろう？（片方を先に生成しないともう片方が生成できないデッドロック気味な状態）
   case class AnswerRequest(val id: String, val text: String, val tags: Set[TagRequest])
-  case class QuestionRequest(val id: String, val title: String, val body: String, val answers: Set[AnswerRequest], val tags: Set[TagRequest])
+  case class QuestionRequest(val id: String, val title: String, val body: String, val tags: Set[TagRequest] = Set.empty[TagRequest])
   implicit val tagJsonFormat = jsonFormat1(TagRequest)
   implicit val answerJsonFormat = jsonFormat3(AnswerRequest)
-  implicit val questionJsonFormat = jsonFormat5(QuestionRequest)
+  implicit val questionJsonFormat = jsonFormat4(QuestionRequest)
 
   case class TagResponse(val name: String) // tagとanswerが循環参照しているような時は、どうやってjsonFormat作るんだろう？（片方を先に生成しないともう片方が生成できないデッドロック気味な状態）
   case class AnswerResponse(val id: String, val text: String, val tags: Set[TagResponse])
@@ -41,8 +41,13 @@ class QuestionRoutes(usecase: ActorRef[QuestionUsecase.Command]) {
       // 一旦仮のデータを返す
       Question("id", "title", "body", Set.empty, Set(Tag("test"))) match {
         case Left(_) => None
-        case Right(question) => Some(QuestionResponse(id = question.id, title = question.title, body = question.body,
-          answers = question.answers, tags = question.tags))
+        case Right(question) => Some(
+          QuestionResponse(
+            id = question.id,
+            title = question.title,
+            body = question.body,
+            answers = question.answers.map(answer => AnswerResponse(id = answer.id, text = answer.text, tags = answer.tags.map(tag => TagResponse(tag.name)))),
+            tags = question.tags.map(tag => TagResponse(tag.name))))
       }
     }
   }
