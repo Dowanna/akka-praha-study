@@ -43,7 +43,7 @@ class QuestionRoutes(context: ActorContext[QuestionUsecase.Create], usecase: Act
 
   def createQuestion(questionRequest: QuestionRequest): Future[Option[QuestionResponse]] = {
     Future {
-      context.ask(usecase, Create(questionRequest))
+        context.ask(ref => Create(ref,questionRequest))
 //      usecase ! Create(questionRequest)
     }
   }
