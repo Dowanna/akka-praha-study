@@ -6,11 +6,14 @@ import akka.http.scaladsl.server.Route
 import usecase.QuestionUsecase
 import domain.Question
 import usecase.QuestionUsecase.Create
+
 import scala.concurrent.Future
 import akka.actor.typed.ActorRef
+import akka.actor.typed.scaladsl.ActorContext
 import domain.Tag
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import spray.json.DefaultJsonProtocol._
+
 import scala.concurrent.ExecutionContext.Implicits.global
 
 object QuestionRoutes {
@@ -31,7 +34,7 @@ object QuestionRoutes {
   implicit val answerResponseJsomFormat = jsonFormat3(AnswerResponse)
   implicit val questionResponseJsomFormat = jsonFormat5(QuestionResponse)
 }
-class QuestionRoutes(usecase: ActorRef[QuestionUsecase.Command]) {
+class QuestionRoutes(context: ActorContext[QuestionUsecase.Create], usecase: ActorRef[QuestionUsecase.Command]) {
   import QuestionRoutes._
 
   def getUsers(): String = {
@@ -40,19 +43,8 @@ class QuestionRoutes(usecase: ActorRef[QuestionUsecase.Command]) {
 
   def createQuestion(questionRequest: QuestionRequest): Future[Option[QuestionResponse]] = {
     Future {
-      usecase ! Create(questionRequest)
-
-      // 一旦仮のデータを返す
-      Question("id", "title", "body", Set.empty, Set(Tag("test"))) match {
-        case Left(_) => None
-        case Right(question) => Some(
-          QuestionResponse(
-            id = question.id,
-            title = question.title,
-            body = question.body,
-            answers = question.answers.map(answer => AnswerResponse(id = answer.id, text = answer.text, tags = answer.tags.map(tag => TagResponse(tag.name)))),
-            tags = question.tags.map(tag => TagResponse(tag.name))))
-      }
+      context.ask(usecase, Create(questionRequest))
+//      usecase ! Create(questionRequest)
     }
   }
 
