@@ -10,9 +10,9 @@ object QuestionUsecase {
   sealed trait Command
   final case class Create(questionRequest: QuestionRequest, replyTo: ActorRef[Response]) extends Command
 
-  case class Response()
-  final case class SuccessResponse(res: QuestionResponse) extends Response
-
+  sealed trait Response
+  final case class SuccessResponse(questionResponse: QuestionResponse) extends Response
+  final case class FailedResponse() extends Response
 
   def apply(): Behavior[Command] = {
     registry()
@@ -20,12 +20,11 @@ object QuestionUsecase {
 
   private def registry(): Behavior[Command] = {
     Behaviors.receiveMessage {
-      case Create(replyTo, questionRequest) => {
-        //        val question = Question(id: questionRequest.id)
+      case Create(questionRequest, replyTo) => {
         Question("id", "title", "body", Set.empty, Set(Tag("test"))) match {
-          case Left(_) =>
+          case Left(_) => replyTo ! FailedResponse()
           case Right(question) =>
-            replyTo ! Response(QuestionResponse(
+            replyTo ! SuccessResponse(QuestionResponse(
               id = question.id,
               title = question.title,
               body = question.body,

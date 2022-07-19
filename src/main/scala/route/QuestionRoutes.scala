@@ -49,9 +49,8 @@ class QuestionRoutes(usecase: ActorRef[QuestionUsecase.Command])(implicit val sy
   implicit val timeout = Timeout.create(Duration.ofSeconds(3));
   // implicit val scheduler = Scheduler.
 
-  def createQuestion(questionRequest: QuestionRequest): Future[Option[QuestionResponse]] = {
-    val result = usecase.ask(QuestionUsecase.Create(questionRequest, _));
-    result.map(r => Some(r))
+  def createQuestion(questionRequest: QuestionRequest): Future[QuestionUsecase.Response] = {
+    usecase.ask(QuestionUsecase.Create(questionRequest, _));
   }
 
   val questionRoutes: Route =
@@ -63,8 +62,8 @@ class QuestionRoutes(usecase: ActorRef[QuestionUsecase.Command])(implicit val sy
         post {
           entity(as[QuestionRequest]) { questionRequest =>
             onSuccess(createQuestion(questionRequest)) {
-              case Some(question) => complete(question)
-              case None => complete(StatusCodes.BadRequest)
+              case QuestionUsecase.SuccessResponse(questionResponse) => complete(questionResponse)
+              case QuestionUsecase.FailedResponse() => complete(StatusCodes.BadRequest)
             }
           }
         }
