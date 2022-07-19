@@ -13,8 +13,13 @@ import akka.actor.typed.scaladsl.ActorContext
 import domain.Tag
 import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport._
 import spray.json.DefaultJsonProtocol._
+import akka.actor.typed.scaladsl.AskPattern._
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import akka.util.Timeout
+import java.time.Duration
+import akka.actor.typed.Scheduler
+import akka.actor.typed.ActorSystem
 
 object QuestionRoutes {
 
@@ -34,18 +39,19 @@ object QuestionRoutes {
   implicit val answerResponseJsomFormat = jsonFormat3(AnswerResponse)
   implicit val questionResponseJsomFormat = jsonFormat5(QuestionResponse)
 }
-class QuestionRoutes(context: ActorContext[QuestionUsecase.Create], usecase: ActorRef[QuestionUsecase.Command]) {
+class QuestionRoutes(usecase: ActorRef[QuestionUsecase.Command])(implicit val system: ActorSystem[Nothing]) {
   import QuestionRoutes._
 
   def getUsers(): String = {
     "hoge"
   }
 
+  implicit val timeout = Timeout.create(Duration.ofSeconds(3));
+  // implicit val scheduler = Scheduler.
+
   def createQuestion(questionRequest: QuestionRequest): Future[Option[QuestionResponse]] = {
-    Future {
-        context.ask(ref => Create(ref,questionRequest))
-//      usecase ! Create(questionRequest)
-    }
+    val result = usecase.ask(QuestionUsecase.Create(questionRequest, _));
+    
   }
 
   val questionRoutes: Route =

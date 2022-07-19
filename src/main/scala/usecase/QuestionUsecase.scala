@@ -8,7 +8,7 @@ import akka.actor.typed.ActorRef
 
 object QuestionUsecase {
   sealed trait Command
-  final case class Create(replyTo: ActorRef[Response], questionRequest: QuestionRequest) extends Command
+  final case class Create(questionRequest: QuestionRequest, replyTo: ActorRef[Response]) extends Command
   final case class Response(questionResponse: QuestionResponse)
 
   def apply(): Behavior[Command] = {
