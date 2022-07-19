@@ -51,7 +51,7 @@ class QuestionRoutes(usecase: ActorRef[QuestionUsecase.Command])(implicit val sy
 
   def createQuestion(questionRequest: QuestionRequest): Future[Option[QuestionResponse]] = {
     val result = usecase.ask(QuestionUsecase.Create(questionRequest, _));
-    
+    result.map(r => Some(r))
   }
 
   val questionRoutes: Route =
