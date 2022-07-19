@@ -21,7 +21,13 @@ object QuestionUsecase {
   private def registry(): Behavior[Command] = {
     Behaviors.receiveMessage {
       case Create(questionRequest, replyTo) => {
-        Question("id", "title", "body", Set.empty, Set(Tag("test"))) match {
+        Question(
+          id = questionRequest.id,
+          title = questionRequest.title,
+          body = questionRequest.body,
+          Set.empty,
+          tags = questionRequest.tags.fold(Set.empty[Tag])(tagRequestSet => tagRequestSet.map(tagRequest => Tag(tagRequest.name)))
+        ) match {
           case Left(_) => replyTo ! FailedResponse()
           case Right(question) =>
             replyTo ! SuccessResponse(QuestionResponse(
