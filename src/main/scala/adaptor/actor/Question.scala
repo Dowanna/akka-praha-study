@@ -17,6 +17,9 @@ object QuestionActor {
   case class GetAllAnswers(replyTo: ActorRef[GetAllAnswersResponse]) extends Command
   case class FinishedGetAllAnswers() extends Command
 
+  sealed trait CommandResponse
+  case class GetQuestion(question: Question) extends CommandResponse
+
   // このactorが受信した際に変換するmessage
   private case class AdaptedResponse(getAnswerResponse: GetAnswerResponse) extends Command
 

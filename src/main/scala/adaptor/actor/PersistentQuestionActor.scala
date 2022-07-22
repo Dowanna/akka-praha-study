@@ -1,5 +1,7 @@
 package adaptor.actor
 
+import adaptor.actor.QuestionActor.GetQuestion
+import akka.actor.typed.ActorRef
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior}
 import domain.Answer
@@ -8,6 +10,7 @@ import domain.Question
 object PersistentQuestionActor {
   sealed trait Command
   final case class AddAnswer(answer: Answer) extends Command
+  final case class Get(replyTo: ActorRef[QuestionActor.CommandResponse]) extends Command
 
   sealed trait Event
   final case class AddedAnswerToQuestion(question: Question) extends Event
@@ -33,6 +36,9 @@ object PersistentQuestionActor {
             Effect.persist(AddedAnswerToQuestion(value))
         }
       }
+      case Get(replyTo) =>
+        replyTo ! GetQuestion(state.question)
+        Effect.none
     }
   val eventHandler: (State, Event) => State = (state, event) =>
     event match {
