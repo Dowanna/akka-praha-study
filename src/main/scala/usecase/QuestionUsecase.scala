@@ -10,6 +10,8 @@ object QuestionUsecase {
   sealed trait Command
   final case class Create(questionRequest: QuestionRequest, replyTo: ActorRef[Response]) extends Command
 
+  final case class Get(id: String, replyTo: ActorRef[Response]) extends Command
+
   sealed trait Response
   final case class SuccessResponse(questionResponse: QuestionResponse) extends Response
   final case class FailedResponse() extends Response
@@ -38,6 +40,10 @@ object QuestionUsecase {
               tags = question.tags.map(tag => TagResponse(tag.name))))
         }
         Behaviors.same
+      }
+
+      case Get(id) => {
+
       }
     }
   }

@@ -3,9 +3,8 @@ package adaptor.actor
 package wallet.adaptor.typed
 
 import akka.actor.typed.scaladsl.Behaviors
-import akka.actor.typed.{ ActorRef, Behavior }
-import wallet.WalletId
-import wallet.adaptor.typed.WalletProtocol.CommandRequest
+import akka.actor.typed.{ActorRef, Behavior}
+import domain.Question
 
 object WalletAggregates {
 
@@ -13,7 +12,7 @@ object WalletAggregates {
 
   def behavior(
       name: String => String,
-  )(behaviorF: (id: String, question: Question) => Behavior[CommandRequest]): Behavior[CommandRequest] = {
+  )(behaviorF: (id: String, question: Question) => Behavior[PersistentQuestionActor.Command]): Behavior[CommandRequest] = {
     Behaviors.setup { ctx =>
       def createAndSend(questionId: String): ActorRef[CommandRequest] = {
         ctx.child(QuestionActor.name(walletId)) match {
