@@ -26,6 +26,8 @@ object QuestionActor {
   // このactorが送信するmessage
   case class GetAllAnswersResponse(answers: Vector[Answer])
 
+  def name(id: String): String = "question-typed-" + id
+
   def apply(question: Question): Behavior[Command] = {
     create(Vector.empty, question, None, Set.empty, Vector.empty);
   }
