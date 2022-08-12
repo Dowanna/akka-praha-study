@@ -41,10 +41,6 @@ object QuestionUsecase {
         }
         Behaviors.same
       }
-
-      case Get(id) => {
-
-      }
     }
   }
 }

@@ -1,7 +1,5 @@
 package adaptor.actor
 
-package wallet.adaptor.typed
-
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.{ActorRef, Behavior}
 import domain.Question
@@ -12,7 +10,7 @@ object QuestionAggregates {
 
   def behavior(
       name: String => String,
-  )(behaviorF: (String, Question) => Behavior[PersistentQuestionActor.Command]): Behavior[PersistentQuestionActor.Command] = {
+  )(behaviorF: (String) => Behavior[PersistentQuestionActor.Command]): Behavior[PersistentQuestionActor.Command] = {
     Behaviors.setup { ctx =>
       def createAndSend(questionId: String): ActorRef[PersistentQuestionActor.Command] = {
         ctx.child(name(questionId)) match {

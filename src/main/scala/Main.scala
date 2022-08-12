@@ -10,6 +10,8 @@ import usecase.QuestionUsecase
 import route.QuestionRoutes
 import scala.util.Success
 import scala.util.Failure
+import adaptor.actor.QuestionAggregates
+import adaptor.actor.PersistentQuestionActor
 
 object PrahaStudy {
 ////#start-http-server
