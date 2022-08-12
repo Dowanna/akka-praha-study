@@ -18,7 +18,7 @@ object QuestionAggregates {
         ctx.child(name(questionId)) match {
           case None =>
             // 子アクター作成
-            ctx.spawn(behaviorF(questionId, /*?question?*/), name = name(questionId))
+            ctx.spawn(behaviorF(questionId), name = name(questionId))
           case Some(ref) =>
             // 子アクターの参照取得
             ref.asInstanceOf[ActorRef[PersistentQuestionActor.Command]]
