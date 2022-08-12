@@ -8,9 +8,11 @@ import domain.Answer
 import domain.Question
 
 object PersistentQuestionActor {
-  sealed trait Command
-  final case class AddAnswer(answer: Answer) extends Command
-  final case class Get(replyTo: ActorRef[QuestionActor.CommandResponse]) extends Command
+  sealed trait Command {
+    val questionId: String
+  }
+  final case class AddAnswer(questionId: String, answer: Answer) extends Command
+  final case class Get(questionId: String, replyTo: ActorRef[QuestionActor.CommandResponse]) extends Command
 
   sealed trait Event
   final case class AddedAnswerToQuestion(question: Question) extends Event

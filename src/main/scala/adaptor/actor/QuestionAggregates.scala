@@ -15,10 +15,10 @@ object QuestionAggregates {
   )(behaviorF: (String, Question) => Behavior[PersistentQuestionActor.Command]): Behavior[PersistentQuestionActor.Command] = {
     Behaviors.setup { ctx =>
       def createAndSend(questionId: String): ActorRef[PersistentQuestionActor.Command] = {
-        ctx.child(QuestionActor.name(walletId)) match {
+        ctx.child(name(questionId)) match {
           case None =>
             // 子アクター作成
-            ctx.spawn(behaviorF(walletId), name = name(questionId))
+            ctx.spawn(behaviorF(questionId, /*?question?*/), name = name(questionId))
           case Some(ref) =>
             // 子アクターの参照取得
             ref.asInstanceOf[ActorRef[PersistentQuestionActor.Command]]
