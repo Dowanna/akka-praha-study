@@ -18,7 +18,7 @@ object PersistentQuestionActor {
 
   final case class State(question: Question)
 
-  def Behavior(id: String, question: Question) = {
+  def behavior(id: String, question: Question) = {
     EventSourcedBehavior[Command, Event, State](
       persistenceId = PersistenceId("question", id), // 他のpersistent-actorと被ったらどうなるんだろう?
       emptyState = State(question),

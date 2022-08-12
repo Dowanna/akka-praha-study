@@ -32,6 +32,12 @@ object PrahaStudy {
   def main(args: Array[String]): Unit = {
     // #server-bootstrapping
     val rootBehavior = Behaviors.setup[Nothing] { context =>
+
+      context.spawn(
+        QuestionAggregates
+        .behavior((id: String) => "question-typed-" + id)
+          (PersistentQuestionActor.behavior), "QuestionAggregates");
+
       val questionUsecase = context.spawn(QuestionUsecase(), "QuestionUsecase")
       context.watch(questionUsecase)
 
