@@ -32,9 +32,15 @@ object PersistentQuestionActor {
   }
 
   val commandHandler: (State, Command) => Effect[Event, State] = (state, command) =>
-    (state,command) match {
+    (state, command) match {
       case (DefinedState(question), AddAnswer(questionId, answer)) => {
-        Question(id = questionId, title = question.title, body = question.body, answers = question.answers + answer, tags = question.tags) match {
+        Question(
+          id = questionId,
+          title = question.title,
+          body = question.body,
+          answers = question.answers + answer,
+          tags = question.tags
+        ) match {
           case Left(value) => Effect.persist(AddAnswerFailed)
           case Right(value) =>
             Effect.persist(AddedAnswerToQuestion(value))
@@ -49,6 +55,6 @@ object PersistentQuestionActor {
   val eventHandler: (State, Event) => State = (state, event) =>
     event match {
       case AddedAnswerToQuestion(question) => DefinedState(question)
-      case AddAnswerFailed => state
+      case AddAnswerFailed                 => state
     }
 }
