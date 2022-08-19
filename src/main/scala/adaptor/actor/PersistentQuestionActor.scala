@@ -70,4 +70,9 @@ object PersistentQuestionActor {
       case AddedAnswerToQuestion(question) => DefinedState(question)
       case AddAnswerFailed                 => state
     }
+  // fixme: sbt runするとこのエラーが出る
+//     12:55:49.025 [PersistentQuestionActorSpec-akka.actor.default-dispatcher-3] DEBUG akka.persistence.typed.internal.EventSourcedBehaviorImpl - Recovery for persistenceId [PersistenceId(question|question_1)] took 254.1 ms
+// 12:55:49.038 [PersistentQuestionActorSpec-akka.actor.default-dispatcher-3] ERROR akka.actor.SupervisorStrategy - TODO: process the command & return an Effect
+// scala.NotImplementedError: TODO: process the command & return an Effect
+
 }
