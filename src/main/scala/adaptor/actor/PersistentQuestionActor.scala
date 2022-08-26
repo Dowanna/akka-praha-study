@@ -26,8 +26,10 @@ object PersistentQuestionActor {
     EventSourcedBehavior[Command, Event, State](
       persistenceId = PersistenceId("question", id), // 他のpersistent-actorと被ったらどうなるんだろう?
       emptyState = EmptyState,
-      commandHandler = (state, command) => throw new NotImplementedError("TODO: process the command & return an Effect"),
-      eventHandler = (state, event) => throw new NotImplementedError("TODO: process the event return the next state")
+      commandHandler = commandHandler,
+      eventHandler = eventHandler
+      // commandHandler = (state, command) => throw new NotImplementedError("TODO: process the command & return an Effect"),
+      // eventHandler = (state, event) => throw new NotImplementedError("TODO: process the event return the next state")
     )
   }
 
@@ -61,6 +63,9 @@ object PersistentQuestionActor {
       }
       case (DefinedState(question), Get(_, replyTo)) => {
         replyTo ! GetQuestion(question)
+        Effect.none
+      }
+      case _ => {
         Effect.none
       }
     }
