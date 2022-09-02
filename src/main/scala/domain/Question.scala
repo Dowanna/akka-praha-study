@@ -2,7 +2,8 @@ package domain
 
 case class AddAnswerError(tooManyAnswers: Boolean)
 
-class Question private (val id: String, val title: String, val body: String, val answers: Set[Answer], val tags: Set[Tag]) {
+class Question private (val id: String, val title: String, val body: String, val answers: Set[Answer], val tags: Set[Tag])
+    extends Serializable {
   // バリデーションのパターン
   // 1: Try
   // 2: Either
