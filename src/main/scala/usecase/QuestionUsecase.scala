@@ -5,6 +5,9 @@ import akka.actor.typed.Behavior
 import route.QuestionRoutes._
 import domain.{Question, Tag}
 import akka.actor.typed.ActorRef
+import adaptor.actor.QuestionActor
+import adaptor.actor.QuestionAggregates
+import adaptor.actor.PersistentQuestionActor
 
 object QuestionUsecase {
   sealed trait Command
@@ -30,14 +33,23 @@ object QuestionUsecase {
           Set.empty,
           tags = questionRequest.tags.fold(Set.empty[Tag])(tagRequestSet => tagRequestSet.map(tagRequest => Tag(tagRequest.name)))
         ) match {
-          case Left(_) => replyTo ! FailedResponse()
+          case Left(_)         => replyTo ! FailedResponse()
           case Right(question) =>
-            replyTo ! SuccessResponse(QuestionResponse(
-              id = question.id,
-              title = question.title,
-              body = question.body,
-              answers = question.answers.map(answer => AnswerResponse(id = answer.id, text = answer.text, tags = answer.tags.map(tag => TagResponse(tag.name)))),
-              tags = question.tags.map(tag => TagResponse(tag.name))))
+            // 永続化アクターにQuestionを渡す
+            // Mainでspawnしているのでそっちを参照したい　 -> usecaseに引数でわたす。
+            val persistentQuestionActor = spawn(QuestionAggregates.behavior(QuestionActor.name)(PersistentQuestionActor.behavior))
+            persistentQuestionActor ! PersistentQuestionActor.CreateQuestion(question)
+            replyTo ! SuccessResponse(
+              QuestionResponse(
+                id = question.id,
+                title = question.title,
+                body = question.body,
+                answers = question.answers.map(answer =>
+                  AnswerResponse(id = answer.id, text = answer.text, tags = answer.tags.map(tag => TagResponse(tag.name)))
+                ),
+                tags = question.tags.map(tag => TagResponse(tag.name))
+              )
+            )
         }
         Behaviors.same
       }

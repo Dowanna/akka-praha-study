@@ -25,6 +25,7 @@ class PersistentQuestionActorSpec extends ScalaTestWithActorTestKit with FreeSpe
       questionRef ! PersistentQuestionActor.Get("123", testProbe.ref)
 
       testProbe.expectMessageType[QuestionActor.GetQuestion]
+
     }
   }
 }

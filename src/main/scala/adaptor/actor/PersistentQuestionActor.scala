@@ -14,8 +14,13 @@ object PersistentQuestionActor {
   final case class AddAnswer(questionId: String, answer: Answer) extends Command
   final case class Get(questionId: String, replyTo: ActorRef[QuestionActor.CommandResponse]) extends Command
 
+  final case class CreateQuestion(question: Question) extends Command
+
   sealed trait Event
   final case class AddedAnswerToQuestion(question: Question) extends Event
+
+  final case class QuestionCreated(question: Question) extends Event
+
   case object AddAnswerFailed extends Event
 
   sealed trait State
@@ -35,6 +40,9 @@ object PersistentQuestionActor {
 
   val commandHandler: (State, Command) => Effect[Event, State] = (state, command) =>
     (state, command) match {
+      case (EmptyState, CreateQuestion(question)) => {
+        Effect.persist(QuestionCreated(question))
+      }
       case (EmptyState, AddAnswer(questionId, answer)) => {
         Question(
           id = "id",
@@ -74,6 +82,7 @@ object PersistentQuestionActor {
     event match {
       case AddedAnswerToQuestion(question) => DefinedState(question)
       case AddAnswerFailed                 => state
+      case QuestionCreated(question)       => DefinedState(question)
     }
   // fixme: sbt runするとこのエラーが出る
 //     12:55:49.025 [PersistentQuestionActorSpec-akka.actor.default-dispatcher-3] DEBUG akka.persistence.typed.internal.EventSourcedBehaviorImpl - Recovery for persistenceId [PersistenceId(question|question_1)] took 254.1 ms
