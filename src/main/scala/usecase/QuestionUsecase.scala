@@ -30,7 +30,7 @@ object QuestionUsecase {
   }
 
   private def registry(questionAggregatesRef: ActorRef[PersistentQuestionActor.Command]): Behavior[Command] = {
-    Behaviors.receive {(ctx, message) =>
+    Behaviors.receive {(ctx,msg) => 
       message match {
         case Create(questionRequest, replyTo) => {
           Question(
@@ -65,40 +65,6 @@ object QuestionUsecase {
         }
       }
     }
-    }
-    // Behaviors.receive((ctx, message) => {
-    //   message match {
-    //     case Create(questionRequest, replyTo) => {
-    //       Question(
-    //         id = questionRequest.id,
-    //         title = questionRequest.title,
-    //         body = questionRequest.body,
-    //         Set.empty,
-    //         tags = questionRequest.tags.fold(Set.empty[Tag])(tagRequestSet => tagRequestSet.map(tagRequest => Tag(tagRequest.name)))
-    //       ) match {
-    //         case Left(_)         => replyTo ! FailedResponse()
-    //         case Right(question) =>
-    //           // 永続化アクターにQuestionを渡す
-    //           // Mainでspawnしているのでそっちを参照したい　 -> usecaseに引数でわたす。
-    //           // val persistentQuestionActor = spawn(QuestionAggregates.behavior(QuestionActor.name)(PersistentQuestionActor.behavior))
-
-    //           val result = questionAggregatesRef.ask(PersistentQuestionActor.CreateQuestion(question, _));
-
-    //           // questionAggregates.persistentQuestionActor ! PersistentQuestionActor.CreateQuestion(question)
-    //           replyTo ! SuccessResponse(
-    //             QuestionResponse(
-    //               id = question.id,
-    //               title = question.title,
-    //               body = question.body,
-    //               answers = question.answers.map(answer =>
-    //                 AnswerResponse(id = answer.id, text = answer.text, tags = answer.tags.map(tag => TagResponse(tag.name)))
-    //               ),
-    //               tags = question.tags.map(tag => TagResponse(tag.name))
-    //             )
-    //           )
-    //       }
-    //       Behaviors.same
-    //     }
-    //   }
-    // })
+  }
+}
   
