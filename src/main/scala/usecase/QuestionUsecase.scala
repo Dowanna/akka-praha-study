@@ -9,6 +9,9 @@ import adaptor.actor.QuestionActor
 import adaptor.actor.QuestionAggregates
 import adaptor.actor.PersistentQuestionActor
 import akka.actor.typed.scaladsl.AskPattern._
+import akka.actor.typed.Scheduler
+import akka.util.Timeout
+import java.time.Duration
 
 object QuestionUsecase {
   sealed trait Command
@@ -20,43 +23,82 @@ object QuestionUsecase {
   final case class SuccessResponse(questionResponse: QuestionResponse) extends Response
   final case class FailedResponse() extends Response
 
+  implicit val timeout = Timeout.create(Duration.ofSeconds(3));
+
   def apply(questionAggregatesRef: ActorRef[PersistentQuestionActor.Command]): Behavior[Command] = {
     registry(questionAggregatesRef)
   }
 
   private def registry(questionAggregatesRef: ActorRef[PersistentQuestionActor.Command]): Behavior[Command] = {
-    Behaviors.receiveMessage {
-      case Create(questionRequest, replyTo) => {
-        Question(
-          id = questionRequest.id,
-          title = questionRequest.title,
-          body = questionRequest.body,
-          Set.empty,
-          tags = questionRequest.tags.fold(Set.empty[Tag])(tagRequestSet => tagRequestSet.map(tagRequest => Tag(tagRequest.name)))
-        ) match {
-          case Left(_)         => replyTo ! FailedResponse()
-          case Right(question) =>
-            // 永続化アクターにQuestionを渡す
-            // Mainでspawnしているのでそっちを参照したい　 -> usecaseに引数でわたす。
-            // val persistentQuestionActor = spawn(QuestionAggregates.behavior(QuestionActor.name)(PersistentQuestionActor.behavior))
+    Behaviors.receive {(ctx, message) =>
+      message match {
+        case Create(questionRequest, replyTo) => {
+          Question(
+            id = questionRequest.id,
+            title = questionRequest.title,
+            body = questionRequest.body,
+            Set.empty,
+            tags = questionRequest.tags.fold(Set.empty[Tag])(tagRequestSet => tagRequestSet.map(tagRequest => Tag(tagRequest.name)))
+          ) match {
+            case Left(_)         => replyTo ! FailedResponse()
+            case Right(question) =>
+              // 永続化アクターにQuestionを渡す
+              // Mainでspawnしているのでそっちを参照したい　 -> usecaseに引数でわたす。
+              // val persistentQuestionActor = spawn(QuestionAggregates.behavior(QuestionActor.name)(PersistentQuestionActor.behavior))
 
-            questionAggregatesRef.ask(PersistentQuestionActor.CreateQuestion(question, replyTo));
+              val result = questionAggregatesRef.ask(PersistentQuestionActor.CreateQuestion(question, _));
 
-            // questionAggregates.persistentQuestionActor ! PersistentQuestionActor.CreateQuestion(question)
-            replyTo ! SuccessResponse(
-              QuestionResponse(
-                id = question.id,
-                title = question.title,
-                body = question.body,
-                answers = question.answers.map(answer =>
-                  AnswerResponse(id = answer.id, text = answer.text, tags = answer.tags.map(tag => TagResponse(tag.name)))
-                ),
-                tags = question.tags.map(tag => TagResponse(tag.name))
+              // questionAggregates.persistentQuestionActor ! PersistentQuestionActor.CreateQuestion(question)
+              replyTo ! SuccessResponse(
+                QuestionResponse(
+                  id = question.id,
+                  title = question.title,
+                  body = question.body,
+                  answers = question.answers.map(answer =>
+                    AnswerResponse(id = answer.id, text = answer.text, tags = answer.tags.map(tag => TagResponse(tag.name)))
+                  ),
+                  tags = question.tags.map(tag => TagResponse(tag.name))
+                )
               )
-            )
+          }
+          Behaviors.same
         }
-        Behaviors.same
       }
     }
-  }
-}
+    }
+    // Behaviors.receive((ctx, message) => {
+    //   message match {
+    //     case Create(questionRequest, replyTo) => {
+    //       Question(
+    //         id = questionRequest.id,
+    //         title = questionRequest.title,
+    //         body = questionRequest.body,
+    //         Set.empty,
+    //         tags = questionRequest.tags.fold(Set.empty[Tag])(tagRequestSet => tagRequestSet.map(tagRequest => Tag(tagRequest.name)))
+    //       ) match {
+    //         case Left(_)         => replyTo ! FailedResponse()
+    //         case Right(question) =>
+    //           // 永続化アクターにQuestionを渡す
+    //           // Mainでspawnしているのでそっちを参照したい　 -> usecaseに引数でわたす。
+    //           // val persistentQuestionActor = spawn(QuestionAggregates.behavior(QuestionActor.name)(PersistentQuestionActor.behavior))
+
+    //           val result = questionAggregatesRef.ask(PersistentQuestionActor.CreateQuestion(question, _));
+
+    //           // questionAggregates.persistentQuestionActor ! PersistentQuestionActor.CreateQuestion(question)
+    //           replyTo ! SuccessResponse(
+    //             QuestionResponse(
+    //               id = question.id,
+    //               title = question.title,
+    //               body = question.body,
+    //               answers = question.answers.map(answer =>
+    //                 AnswerResponse(id = answer.id, text = answer.text, tags = answer.tags.map(tag => TagResponse(tag.name)))
+    //               ),
+    //               tags = question.tags.map(tag => TagResponse(tag.name))
+    //             )
+    //           )
+    //       }
+    //       Behaviors.same
+    //     }
+    //   }
+    // })
+  
