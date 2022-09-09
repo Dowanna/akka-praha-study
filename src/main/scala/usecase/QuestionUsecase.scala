@@ -12,6 +12,8 @@ import akka.actor.typed.scaladsl.AskPattern._
 import akka.actor.typed.Scheduler
 import akka.util.Timeout
 import java.time.Duration
+import akka.remote.WireFormats.FiniteDuration
+import scala.concurrent.duration
 
 object QuestionUsecase {
   sealed trait Command
@@ -30,8 +32,8 @@ object QuestionUsecase {
   }
 
   private def registry(questionAggregatesRef: ActorRef[PersistentQuestionActor.Command]): Behavior[Command] = {
-    Behaviors.receive {(ctx,msg) => 
-      message match {
+    Behaviors.receive { (ctx, msg) =>
+      msg match {
         case Create(questionRequest, replyTo) => {
           Question(
             id = questionRequest.id,
@@ -46,7 +48,7 @@ object QuestionUsecase {
               // Mainでspawnしているのでそっちを参照したい　 -> usecaseに引数でわたす。
               // val persistentQuestionActor = spawn(QuestionAggregates.behavior(QuestionActor.name)(PersistentQuestionActor.behavior))
 
-              val result = questionAggregatesRef.ask(PersistentQuestionActor.CreateQuestion(question, _));
+              ctx.scheduleOnce(duration.FiniteDuration(3, "hoge"), questionAggregatesRef, PersistentQuestionActor.Command)
 
               // questionAggregates.persistentQuestionActor ! PersistentQuestionActor.CreateQuestion(question)
               replyTo ! SuccessResponse(
@@ -67,4 +69,3 @@ object QuestionUsecase {
     }
   }
 }
-  
