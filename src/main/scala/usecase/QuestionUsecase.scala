@@ -8,6 +8,7 @@ import akka.actor.typed.ActorRef
 import adaptor.actor.QuestionActor
 import adaptor.actor.QuestionAggregates
 import adaptor.actor.PersistentQuestionActor
+import akka.actor.typed.scaladsl.AskPattern._
 
 object QuestionUsecase {
   sealed trait Command
@@ -19,11 +20,11 @@ object QuestionUsecase {
   final case class SuccessResponse(questionResponse: QuestionResponse) extends Response
   final case class FailedResponse() extends Response
 
-  def apply(): Behavior[Command] = {
-    registry()
+  def apply(questionAggregatesRef: ActorRef[PersistentQuestionActor.Command]): Behavior[Command] = {
+    registry(questionAggregatesRef)
   }
 
-  private def registry(): Behavior[Command] = {
+  private def registry(questionAggregatesRef: ActorRef[PersistentQuestionActor.Command]): Behavior[Command] = {
     Behaviors.receiveMessage {
       case Create(questionRequest, replyTo) => {
         Question(
@@ -37,8 +38,11 @@ object QuestionUsecase {
           case Right(question) =>
             // 永続化アクターにQuestionを渡す
             // Mainでspawnしているのでそっちを参照したい　 -> usecaseに引数でわたす。
-            val persistentQuestionActor = spawn(QuestionAggregates.behavior(QuestionActor.name)(PersistentQuestionActor.behavior))
-            persistentQuestionActor ! PersistentQuestionActor.CreateQuestion(question)
+            // val persistentQuestionActor = spawn(QuestionAggregates.behavior(QuestionActor.name)(PersistentQuestionActor.behavior))
+
+            questionAggregatesRef.ask(PersistentQuestionActor.CreateQuestion(question, replyTo));
+
+            // questionAggregates.persistentQuestionActor ! PersistentQuestionActor.CreateQuestion(question)
             replyTo ! SuccessResponse(
               QuestionResponse(
                 id = question.id,

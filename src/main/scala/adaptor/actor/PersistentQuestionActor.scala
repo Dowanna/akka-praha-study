@@ -14,7 +14,7 @@ object PersistentQuestionActor {
   final case class AddAnswer(questionId: String, answer: Answer) extends Command
   final case class Get(questionId: String, replyTo: ActorRef[QuestionActor.CommandResponse]) extends Command
 
-  final case class CreateQuestion(question: Question) extends Command
+  final case class CreateQuestion(question: Question, replyTo: ActorRef[QuestionActor.CommandResponse]) extends Command
 
   sealed trait Event
   final case class AddedAnswerToQuestion(question: Question) extends Event
